@@ -9,6 +9,7 @@ This plugin was created to support my projects for
 
 ## To Do
 - Add NBSP (Non-breaking space)
+- Add three-Em Dash
 - Change italic element `i` to `em` for a string
 
 
