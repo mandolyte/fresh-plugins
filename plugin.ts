@@ -1,15 +1,6 @@
 // Fresh Plugin
 // Documentation: https://github.com/user/fresh/blob/main/docs/plugins.md
 
-/*
-Test
-fresh --check-plugin plugin.ts 
-
-Validate
-$ ./validate.sh 
-✓ package.json is valid
-*/
-
 const editor = getEditor();
  /*
  * To Do - add some documentation
@@ -29,6 +20,7 @@ type SEUnicodeLabel =
   | "left-single-quote" | "right-single-quote" 
   | "left-double-quote" | "right-double-quote"
   | "em-dash" | "en-dash" | "figure-dash" | "two-em-dash"
+  | "three-em-dash" | "non-breaking-space"
   | "non-breaking-hyphen" | "minus-sign"
   | "ellipsis" | "word-joiner" | "hair-space"
   | "turned-comma-glottal-stop" | "unknown";
@@ -50,7 +42,9 @@ function identifySpecialCharacter(char: string): SEUnicodeLabel {
     case '\u2013': return "en-dash"; // Used for numeric/date ranges
     case '\u2012': return "figure-dash"; // Used for phone numbers/non-range numbers
     case '\u2E3A': return "two-em-dash"; // Used for obscured words or names
+    case '\u2E3B': return "three-em-dash"; // Used for places
     case '\u2011': return "non-breaking-hyphen"; // Used for stretched-out words
+    case '\u00A0': return "non-breaking-space"; // Used to keep words together
     case '\u2212': return "minus-sign"; // Used for negative numbers and math
 
     // --- Formatting & Spacing ---
@@ -64,24 +58,6 @@ function identifySpecialCharacter(char: string): SEUnicodeLabel {
     default: return "unknown";
   }
 }
-
-// Global action: Insert Em Dash
-function insert_split_marker(val: string) : void {
-    const split_marker = "<!--se:split-->";
-    const success = insert_string(split_marker);
-    if (!success) {
-        editor.setStatus("Failed to insert split marker: ${split_marker}");
-        return;
-    }
-    const statusMessage = `Inserted Split Marker (${split_marker})`;
-    editor.setStatus(statusMessage);
-}
-registerHandler("insert_split_marker", insert_split_marker);
-editor.registerCommand(
-  "EBooks: Insert Split Marker",
-  "Insert Split Marker",
-  "insert_split_marker"
-);
  
 // Global action: Insert Em Dash
 function insert_em_dash(val: string) : void {
@@ -94,7 +70,29 @@ function insert_em_dash(val: string) : void {
     const statusMessage = `Inserted Em Dash (${em_dash})`;
     editor.setStatus(statusMessage);
 }
-registerHandler("insert_em_dash", insert_em_dash);
+registerHandler("insert_two_em_dash", insert_em_dash);// Global action: Insert Em Dash
+function insert_two_em_dash(val: string) : void {
+    const two_em_dash = '\u2E3A';
+    const success = insert_string(two_em_dash);
+    if (!success) {
+        editor.setStatus("Failed to insert Two-Em Dash: ${two_em_dash}");
+        return;
+    }
+    const statusMessage = `Inserted Em Dash (${two_em_dash})`;
+    editor.setStatus(statusMessage);
+}
+registerHandler("insert_two_em_dash", insert_two_em_dash);
+function insert_three_em_dash(val: string) : void {
+    const three_em_dash = '\u2E3B';
+    const success = insert_string(three_em_dash);
+    if (!success) {
+        editor.setStatus("Failed to insert Three-Em Dash: ${three_em_dash}");
+        return;
+    }
+    const statusMessage = `Inserted Three-Em Dash (${three_em_dash})`;
+    editor.setStatus(statusMessage);
+}
+registerHandler("insert_three_em_dash", insert_three_em_dash);
 
 // Global action: Insert En Dash
 function insert_en_dash(val: string) : void {
@@ -261,7 +259,6 @@ async function cmos_titlecase() : void {
   const cursorInfo = editor.getPrimaryCursor();
   if (! cursorInfo.selection) {
       editor.setStatus(`Nothing is highlighted!`);
-      return;
   }
   const startSelection = cursorInfo.selection.start;
   const endSelection = cursorInfo.selection.end;
@@ -312,7 +309,6 @@ async function double_quote_selection() : void {
   editor.setStatus(statusMessage)
 }
 registerHandler("double_quote_selection", double_quote_selection);
-
 // Global action: Replace selection with single quoted selection
 async function single_quote_selection() : void {
   const rquote = '\u2019';
@@ -343,46 +339,6 @@ async function single_quote_selection() : void {
   editor.setStatus(statusMessage)
 }
 registerHandler("single_quote_selection", single_quote_selection);
-
-// Global action: Using Standard Ebooks Tooling 
-// Title case string. Note: the "se" tool must be on the path!
-async function se_titlecase() : void {
-  const bufferId = editor.getActiveBufferId();
-  const cursorInfo = editor.getPrimaryCursor();
-  if (! cursorInfo.selection) {
-      editor.setStatus(`Nothing is highlighted!`);
-      return;
-  }
-  const startSelection = cursorInfo.selection.start;
-  const endSelection = cursorInfo.selection.end;
-  const bufText = await 
-      editor.getBufferText(bufferId, startSelection, endSelection);
-      
-  // spawn the se titlecase command
-  const spawnProcess = await editor.spawnProcess("se", ["titlecase", bufText]);
-  if (spawnProcess.exit_code === 0) {
-      editor.setStatus("se titlecase OK!");
-      editor.debug("Spawn of SE succeeded.")
-  } else {
-    editor.setStatus(`se titlecase failed: ${spawnProcess.stderr.split('\n')[0]}`);
-    editor.debug("Spawn of SE failed. Stderr:")
-    editor.debug(spawnProcess.stderr);
-    return;
-  }
-  
-  let success = await 
-      editor.deleteRange(bufferId, startSelection, endSelection);
-  const titleCased = `${spawnProcess.stdout.split('\n')[0]}`;
-  success = editor.insertText(bufferId, startSelection, titleCased);
-  if (!success) {
-    editor.setStatus("Failed to title case string");
-    return;
-  }
-
-  const statusMessage = `Titlecased: ${titleCased}`;
-  editor.setStatus(statusMessage)
-}
-registerHandler("se_titlecase", se_titlecase);
  
 /*
 *
@@ -402,6 +358,16 @@ editor.registerCommand(
   "EBooks: Insert Em-Dash",
   "Insert Em-Dash",
   "insert_em_dash"
+);
+editor.registerCommand(
+  "EBooks: Insert Two-Em-Dash",
+  "Insert Two-Em-Dash",
+  "insert_two_em_dash"
+);
+editor.registerCommand(
+  "EBooks: Insert Three-Em-Dash",
+  "Insert Three-Em-Dash",
+  "insert_three_em_dash"
 );
 editor.registerCommand(
   "EBooks: Insert En-Dash",
@@ -447,8 +413,10 @@ editor.registerCommand(
   "Chicago Manual of Style Title Case Rules",
   "cmos_titlecase"
 );
-editor.registerCommand(
-  "Ebooks: SE Titlecase",
-  "Titlecase per Standard Ebooks Tooling",
-  "se_titlecase"
-);
+
+// Example: Add a keybinding in your Fresh config:
+// {
+//   "keyBindings": {
+//     "ctrl+alt+h": "command:hello"
+//   }
+// }
