@@ -7,6 +7,10 @@ of Unicode Typography used in EPUB book productions.
 This plugin was created to support my projects for 
 [Standard Ebooks](https://standardebooks.org/ebooks).
 
+## To Do
+- Add NBSP (Non-breaking space)
+- Change italic element `i` to `em` for a string
+
 
 ## Unicode Helpers for Ebooks
 
