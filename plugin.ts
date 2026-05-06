@@ -340,6 +340,48 @@ async function single_quote_selection() : void {
 }
 registerHandler("single_quote_selection", single_quote_selection);
  
+
+
+// Global action: Using Standard Ebooks Tooling 
+// Title case string. Note: the "se" tool must be on the path!
+async function se_titlecase() : void {
+  const bufferId = editor.getActiveBufferId();
+  const cursorInfo = editor.getPrimaryCursor();
+  if (! cursorInfo.selection) {
+      editor.setStatus(`Nothing is highlighted!`);
+      return;
+  }
+  const startSelection = cursorInfo.selection.start;
+  const endSelection = cursorInfo.selection.end;
+  const bufText = await 
+      editor.getBufferText(bufferId, startSelection, endSelection);
+      
+  // spawn the se titlecase command
+  const spawnProcess = await editor.spawnProcess("se", ["titlecase", bufText]);
+  if (spawnProcess.exit_code === 0) {
+      editor.setStatus("se titlecase OK!");
+      editor.debug("Spawn of SE succeeded.")
+  } else {
+    editor.setStatus(`se titlecase failed: ${spawnProcess.stderr.split('\n')[0]}`);
+    editor.debug("Spawn of SE failed. Stderr:")
+    editor.debug(spawnProcess.stderr);
+    return;
+  }
+  
+  let success = await 
+      editor.deleteRange(bufferId, startSelection, endSelection);
+  const titleCased = `${spawnProcess.stdout.split('\n')[0]}`;
+  success = editor.insertText(bufferId, startSelection, titleCased);
+  if (!success) {
+    editor.setStatus("Failed to title case string");
+    return;
+  }
+
+  const statusMessage = `Titlecased: ${titleCased}`;
+  editor.setStatus(statusMessage)
+}
+registerHandler("se_titlecase", se_titlecase);
+
 /*
 *
 * Command Registrations
@@ -414,9 +456,8 @@ editor.registerCommand(
   "cmos_titlecase"
 );
 
-// Example: Add a keybinding in your Fresh config:
-// {
-//   "keyBindings": {
-//     "ctrl+alt+h": "command:hello"
-//   }
-// }
+editor.registerCommand(
+  "Ebooks: SE Titlecase",
+  "Titlecase per Standard Ebooks Tooling",
+  "se_titlecase"
+);
