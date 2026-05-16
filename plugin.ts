@@ -70,7 +70,8 @@ function insert_em_dash(val: string) : void {
     const statusMessage = `Inserted Em Dash (${em_dash})`;
     editor.setStatus(statusMessage);
 }
-registerHandler("insert_two_em_dash", insert_em_dash);// Global action: Insert Em Dash
+registerHandler("insert_em_dash", insert_em_dash);// Global action: Insert Em Dash
+
 function insert_two_em_dash(val: string) : void {
     const two_em_dash = '\u2E3A';
     const success = insert_string(two_em_dash);
@@ -82,6 +83,7 @@ function insert_two_em_dash(val: string) : void {
     editor.setStatus(statusMessage);
 }
 registerHandler("insert_two_em_dash", insert_two_em_dash);
+
 function insert_three_em_dash(val: string) : void {
     const three_em_dash = '\u2E3B';
     const success = insert_string(three_em_dash);
@@ -174,7 +176,7 @@ async function identify_unicode_character(val: string) : void {
     const bufText = await editor.getBufferText(bufferId, startSelection, endSelection);
     let namedCharacter: string = identifySpecialCharacter(bufText);
     if (namedCharacter == "unknown") {
-        namedCharacter = `Unamed character:${bufText}`
+        namedCharacter = `Unamed /${bufText}/`
     }
     
     const statusMessage = `Unicode character is: ${namedCharacter}`;
