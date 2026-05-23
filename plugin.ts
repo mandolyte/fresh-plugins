@@ -1,6 +1,15 @@
 // Fresh Plugin
 // Documentation: https://github.com/user/fresh/blob/main/docs/plugins.md
 
+/*
+Test
+fresh --check-plugin plugin.ts 
+
+Validate
+$ ./validate.sh 
+✓ package.json is valid
+*/
+
 const editor = getEditor();
  /*
  * To Do - add some documentation
@@ -20,9 +29,8 @@ type SEUnicodeLabel =
   | "left-single-quote" | "right-single-quote" 
   | "left-double-quote" | "right-double-quote"
   | "em-dash" | "en-dash" | "figure-dash" | "two-em-dash"
-  | "three-em-dash" | "non-breaking-space"
   | "non-breaking-hyphen" | "minus-sign"
-  | "ellipsis" | "word-joiner" | "hair-space"
+  | "ellipsis" | "vertical-ellipsis" | "word-joiner" | "hair-space"
   | "turned-comma-glottal-stop" | "unknown";
 
 /**
@@ -42,13 +50,12 @@ function identifySpecialCharacter(char: string): SEUnicodeLabel {
     case '\u2013': return "en-dash"; // Used for numeric/date ranges
     case '\u2012': return "figure-dash"; // Used for phone numbers/non-range numbers
     case '\u2E3A': return "two-em-dash"; // Used for obscured words or names
-    case '\u2E3B': return "three-em-dash"; // Used for places
     case '\u2011': return "non-breaking-hyphen"; // Used for stretched-out words
-    case '\u00A0': return "non-breaking-space"; // Used to keep words together
     case '\u2212': return "minus-sign"; // Used for negative numbers and math
 
     // --- Formatting & Spacing ---
     case '\u2026': return "ellipsis";
+    case '\u22EE': rerurn "vertical-ellipsis"; 
     case '\u2060': return "word-joiner"; // Invisible; prevents line breaks around dashes/ellipses
     case '\u200A': return "hair-space"; // Ultra-thin space used to separate adjacent quotes
 
@@ -70,31 +77,7 @@ function insert_em_dash(val: string) : void {
     const statusMessage = `Inserted Em Dash (${em_dash})`;
     editor.setStatus(statusMessage);
 }
-registerHandler("insert_em_dash", insert_em_dash);// Global action: Insert Em Dash
-
-function insert_two_em_dash(val: string) : void {
-    const two_em_dash = '\u2E3A';
-    const success = insert_string(two_em_dash);
-    if (!success) {
-        editor.setStatus("Failed to insert Two-Em Dash: ${two_em_dash}");
-        return;
-    }
-    const statusMessage = `Inserted Em Dash (${two_em_dash})`;
-    editor.setStatus(statusMessage);
-}
-registerHandler("insert_two_em_dash", insert_two_em_dash);
-
-function insert_three_em_dash(val: string) : void {
-    const three_em_dash = '\u2E3B';
-    const success = insert_string(three_em_dash);
-    if (!success) {
-        editor.setStatus("Failed to insert Three-Em Dash: ${three_em_dash}");
-        return;
-    }
-    const statusMessage = `Inserted Three-Em Dash (${three_em_dash})`;
-    editor.setStatus(statusMessage);
-}
-registerHandler("insert_three_em_dash", insert_three_em_dash);
+registerHandler("insert_em_dash", insert_em_dash);
 
 // Global action: Insert En Dash
 function insert_en_dash(val: string) : void {
@@ -159,7 +142,19 @@ function insert_left_double_quote(val: string) : void {
     const statusMessage = `Inserted left double quote (${quote}) `;
     editor.setStatus(statusMessage);
 }
-registerHandler("insert_left_double_quote", insert_left_double_quote);
+registerHandler("insert_left_double_quote", insert_left_double_quote);// Global action: Insert Left Double Quote
+
+function insert_vertical_ellipsis(val: string) : void {
+    const char = '\u22EE';
+    const success = insert_string(char);
+    if (!success) {
+        editor.setStatus("Failed to insert vertical ellipsis: ${char}");
+        return;
+    }
+    const statusMessage = `Inserted vertical ellipsis (${char}) `;
+    editor.setStatus(statusMessage);
+}
+registerHandler("insert_vertical_ellipsis", insert_vertical_ellipsis);
 
 
 // Global action: Identify Unicode Character
@@ -176,7 +171,7 @@ async function identify_unicode_character(val: string) : void {
     const bufText = await editor.getBufferText(bufferId, startSelection, endSelection);
     let namedCharacter: string = identifySpecialCharacter(bufText);
     if (namedCharacter == "unknown") {
-        namedCharacter = `Unamed /${bufText}/`
+        namedCharacter = `Unamed character:${bufText}`
     }
     
     const statusMessage = `Unicode character is: ${namedCharacter}`;
@@ -261,6 +256,7 @@ async function cmos_titlecase() : void {
   const cursorInfo = editor.getPrimaryCursor();
   if (! cursorInfo.selection) {
       editor.setStatus(`Nothing is highlighted!`);
+      return;
   }
   const startSelection = cursorInfo.selection.start;
   const endSelection = cursorInfo.selection.end;
@@ -311,6 +307,7 @@ async function double_quote_selection() : void {
   editor.setStatus(statusMessage)
 }
 registerHandler("double_quote_selection", double_quote_selection);
+
 // Global action: Replace selection with single quoted selection
 async function single_quote_selection() : void {
   const rquote = '\u2019';
@@ -341,8 +338,6 @@ async function single_quote_selection() : void {
   editor.setStatus(statusMessage)
 }
 registerHandler("single_quote_selection", single_quote_selection);
- 
-
 
 // Global action: Using Standard Ebooks Tooling 
 // Title case string. Note: the "se" tool must be on the path!
@@ -383,7 +378,7 @@ async function se_titlecase() : void {
   editor.setStatus(statusMessage)
 }
 registerHandler("se_titlecase", se_titlecase);
-
+ 
 /*
 *
 * Command Registrations
@@ -402,16 +397,6 @@ editor.registerCommand(
   "EBooks: Insert Em-Dash",
   "Insert Em-Dash",
   "insert_em_dash"
-);
-editor.registerCommand(
-  "EBooks: Insert Two-Em-Dash",
-  "Insert Two-Em-Dash",
-  "insert_two_em_dash"
-);
-editor.registerCommand(
-  "EBooks: Insert Three-Em-Dash",
-  "Insert Three-Em-Dash",
-  "insert_three_em_dash"
 );
 editor.registerCommand(
   "EBooks: Insert En-Dash",
@@ -440,6 +425,11 @@ editor.registerCommand(
   "Insert Right Double Quote",
   "insert_right_double_quote"
 );
+editor.registerCommand(
+  "EBooks: Vertical Ellipsis",
+  "Insert Vertical Ellipsis",
+  "insert_vertical_ellipsis"
+);
 
 // String Transformations
 editor.registerCommand(
@@ -457,7 +447,6 @@ editor.registerCommand(
   "Chicago Manual of Style Title Case Rules",
   "cmos_titlecase"
 );
-
 editor.registerCommand(
   "Ebooks: SE Titlecase",
   "Titlecase per Standard Ebooks Tooling",
