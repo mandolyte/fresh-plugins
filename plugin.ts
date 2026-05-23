@@ -55,7 +55,7 @@ function identifySpecialCharacter(char: string): SEUnicodeLabel {
 
     // --- Formatting & Spacing ---
     case '\u2026': return "ellipsis";
-    case '\u22EE': rerurn "vertical-ellipsis"; 
+    case '\u22EE': return "vertical-ellipsis"; 
     case '\u2060': return "word-joiner"; // Invisible; prevents line breaks around dashes/ellipses
     case '\u200A': return "hair-space"; // Ultra-thin space used to separate adjacent quotes
 
@@ -142,8 +142,9 @@ function insert_left_double_quote(val: string) : void {
     const statusMessage = `Inserted left double quote (${quote}) `;
     editor.setStatus(statusMessage);
 }
-registerHandler("insert_left_double_quote", insert_left_double_quote);// Global action: Insert Left Double Quote
+registerHandler("insert_left_double_quote", insert_left_double_quote);
 
+// Global action: Insert Vertical Ellipsis
 function insert_vertical_ellipsis(val: string) : void {
     const char = '\u22EE';
     const success = insert_string(char);
